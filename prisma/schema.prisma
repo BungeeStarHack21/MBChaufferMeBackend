@@ -9,3 +9,98 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id            Int @id @default(autoincrement())
+  username      String
+  password      String  // Will be in bcrypt format
+  name          String
+  surname       String
+  score         Float
+
+  // Relations from `UserCustomer.user`
+  customer      UserCustomer?
+
+  // Relations from `UserChauffeur.user`
+  chauffeur     UserChauffeur?
+}
+
+model UserCustomer {
+  userId  Int
+  user    User @relation(fields: [userId], references: [id])
+
+  // Relations from `UserRide.customer`
+  rides   UserRide[]
+}
+
+model UserChauffeur {
+  userId              Int
+  user                User? @relation(fields: [userId], references: [id])
+  carModel            String
+  carPlateNumber      String
+  seatCount           Int
+  latitude            Float
+  longitude           Float
+  lastRingNodeTimeId  Int?
+  lastRingNodeTime    UserChauffeurRingNodeTime? @relation(fields: [lastRingNodeTimeId], references: [id])
+
+  // Relations from `UserChauffeurRingNodeTime.chauffeur`
+  ringNodeTimes       UserChauffeurRingNodeTime[] @relation(name: "chauffeurRelation")
+}
+
+model UserChauffeurRingNodeTime {
+  id              Int @id @default(autoincrement())
+  chauffeurId     Int
+  chauffeur       UserChauffeur @relation(name: "chauffeurRelation", fields: [chauffeurId], references: [userId])
+  ringNodeId      Int
+  ringNode        RingNode @relation(fields: [ringNodeId], references: [id])
+  time            DateTime @db.Time(6)
+
+  // Relations from `UserChauffeur.lastRingNodeTime`
+  chauffeurs      UserChauffeur?
+
+  // Relations from `UserRide.startChauffeurRingNodeTime`
+  startUserRides  UserRide[] @relation(name: "startChauffeurRingNodeTime")
+
+  // Relations from `UserRide.endChauffeurRingNodeTime`
+  endUserRides  UserRide[] @relation(name: "endChauffeurRingNodeTime")
+}
+
+model Ring {
+  id              Int @id @default(autoincrement())
+  name            String
+
+  // Relations from `RingNode.ring`
+  ringNodes       RingNode[]
+}
+
+model RingNode {
+  id               Int @id @default(autoincrement())
+  ringId           Int
+  ring             Ring @relation(fields: [ringId], references: [id])
+  name             String
+  order            Int // Starts from 0, minimum is 0
+  latitude         Float
+  longitude        Float
+
+  // Relations from `UserChauffeurRingNodeTime.ringNode`
+  ringNodeTimes    UserChauffeurRingNodeTime[]
+}
+
+model UserRide {
+  id                           Int @id @default(autoincrement())
+  status                       RideStatus
+  customerUserId               Int
+  customer                     UserCustomer @relation(fields: [customerUserId], references: [userId])
+  startChauffeurRingNodeTimeId Int
+  startChauffeurRingNodeTime   UserChauffeurRingNodeTime @relation(name: "startChauffeurRingNodeTime", fields: [startChauffeurRingNodeTimeId], references: [id])
+  endChauffeurRingNodeTimeId   Int
+  endChauffeurRingNodeTime     UserChauffeurRingNodeTime @relation(name: "endChauffeurRingNodeTime", fields: [endChauffeurRingNodeTimeId], references: [id])
+  seatCount                    Int
+}
+
+enum RideStatus {
+  PASSIVE
+  ACTIVE
+  ENDED
+}
