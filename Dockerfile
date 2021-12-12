@@ -16,7 +16,7 @@
 ###############################################################################
 FROM node:14-alpine
 
-RUN apk update && apk add build-base git python
+RUN apk update && apk add build-base git py-pip
 
 COPY package.json .
 COPY yarn.lock .
