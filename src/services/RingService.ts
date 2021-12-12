@@ -1,9 +1,8 @@
-import {Ring, RingNode, UserChauffeurRingNodeTime, UserRide} from "@prisma/client";
+import {Ring, RingNode, UserChauffeurRingNodeTime} from "@prisma/client";
 import {Inject, Injectable} from "@tsed/di";
 import {NearestRingDto} from "./models/NearestRingDto";
 import {PrismaService} from "./PrismaService";
 import {ChauffeurAvailabilityDto} from "./models/ChauffeurAvailabilityDto";
-import {BadRequest} from "@tsed/exceptions";
 import {ResourceNotFound} from "@tsed/common";
 
 type RingWithItsNodes = (Ring & { ringNodes: (RingNode & { ringNodeTimes: UserChauffeurRingNodeTime[] })[] });
@@ -89,17 +88,13 @@ export class RingService {
             currentSeatCount += seatCountDifference;
 
             console.log(currentSeatCount);
-            
+
             if (seatCount > currentSeatCount &&
                 startChaufferRingNodeTime.time >= chauffeurNodeTime.time &&
                 chauffeurNodeTime.time <= endChaufferRingNodeTime.time) {
                 return new ChauffeurAvailabilityDto(false);
             }
         }
-
-        // if (seatCount > currentSeatCount) {
-        //     return new ChauffeurAvailabilityDto(false);
-        // }
 
         return new ChauffeurAvailabilityDto(true);
     }
